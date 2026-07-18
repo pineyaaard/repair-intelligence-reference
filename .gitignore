@@ -1,0 +1,9 @@
+node_modules/
+coverage/
+.env
+.env.*
+!.env.example
+.private-public-scope-denylist.txt
+.DS_Store
+*.log
+.tmp/

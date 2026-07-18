@@ -1,0 +1,5 @@
+# Copy this file to .private-public-scope-denylist.txt before publication.
+# Add one confidential literal per line. Keep the populated file local and
+# uncommitted; scan output identifies rules by number and never prints values.
+restricted-example-label
+restricted-example-endpoint

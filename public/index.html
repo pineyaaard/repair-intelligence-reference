@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A synthetic, privacy-first repair intelligence workflow demonstration.">
+    <title>Repair Intelligence Reference</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script type="module" src="/app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#main" aria-label="Repair Intelligence Reference home">
+        <span class="brand-mark" aria-hidden="true">RI</span>
+        <span>Repair Intelligence Reference</span>
+      </a>
+      <span class="synthetic-badge">Synthetic data only</span>
+    </header>
+
+    <main id="main">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Human-confirmed repair intelligence</p>
+          <h1>From an incomplete request to a reviewable repair path.</h1>
+          <p class="hero-copy">A browser workflow that keeps language understanding, catalog identity, and the final decision visibly separate.</p>
+        </div>
+        <div class="hero-metric" aria-label="Workflow summary">
+          <span>4</span>
+          <p>clear stages<br>one human decision</p>
+        </div>
+      </section>
+
+      <nav class="stepper" aria-label="Workflow progress">
+        <a href="#intake"><span>01</span> Intake</a>
+        <a href="#confirm"><span>02</span> Confirm</a>
+        <a href="#path"><span>03</span> Repair path</a>
+        <a href="#report"><span>04</span> Report</a>
+      </nav>
+
+      <section class="panel" id="intake">
+        <div class="section-heading">
+          <div><span class="step-label">Step 01</span><h2>Describe the vehicle and job</h2></div>
+          <span id="ai-status" class="status-pill">Checking optional AI…</span>
+        </div>
+        <label for="request-text">Free-text request</label>
+        <textarea id="request-text" maxlength="500" rows="4">brand-a series-1 2017 2.0 diesel 190 hp automatic; front brake service</textarea>
+        <div class="privacy-note"><strong>Privacy guard:</strong> use vehicle characteristics only. Do not enter a vehicle identifier, name, email, phone number, or secret.</div>
+        <div class="button-row">
+          <button class="primary" id="local-prefill" type="button">Parse locally</button>
+          <button class="secondary" id="ai-prefill" type="button" disabled>Prefill with GPT-5.6</button>
+        </div>
+        <p id="intake-status" class="inline-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel muted" id="confirm" aria-labelledby="confirm-title">
+        <div class="section-heading">
+          <div><span class="step-label">Step 02</span><h2 id="confirm-title">Review every proposed field</h2></div>
+          <span class="status-pill neutral">Human gate</span>
+        </div>
+        <p class="section-copy">Prefill is a suggestion—not a vehicle decision. Correct anything that is missing before opening the synthetic catalog union.</p>
+        <form id="vehicle-form" class="field-grid">
+          <label>Make<input name="make" autocomplete="off"></label>
+          <label>Model<input name="model" autocomplete="off"></label>
+          <label>Year<input name="year" inputmode="numeric"></label>
+          <label>Engine (L)<input name="engineLiters" inputmode="decimal"></label>
+          <label>Fuel<input name="fuel" autocomplete="off"></label>
+          <label>Power (hp)<input name="powerHp" inputmode="numeric"></label>
+          <label>Transmission<input name="transmission" autocomplete="off"></label>
+          <label>Repair job<select name="repairNodeId"><option value="front-brake-service">Front brake service</option><option value="unknown">Needs confirmation</option></select></label>
+        </form>
+        <div class="button-row">
+          <button class="primary" id="find-options" type="button" disabled>Find synthetic options</button>
+        </div>
+        <div id="catalog-options" class="option-grid" aria-live="polite"></div>
+        <button class="confirm-button" id="confirm-option" type="button" disabled>Confirm selected option and build path</button>
+        <p id="confirm-status" class="inline-status" role="status" aria-live="polite"></p>
+      </section>
+
+      <section class="panel" id="path" aria-labelledby="path-title">
+        <div class="section-heading">
+          <div><span class="step-label">Step 03</span><h2 id="path-title">Visual repair path</h2></div>
+          <span id="path-status" class="status-pill neutral">Awaiting confirmation</span>
+        </div>
+        <div id="repair-path" class="empty-state">
+          <div class="empty-icon" aria-hidden="true">→</div>
+          <p>Confirm a synthetic catalog option to reveal the node, path, parts, and provenance.</p>
+        </div>
+      </section>
+
+      <section class="panel report-panel" id="report">
+        <div>
+          <span class="step-label">Step 04</span>
+          <h2>Found a workflow issue?</h2>
+          <p>Submit a privacy-safe category report. Optional note text is discarded without retention; only a redacted aggregate remains.</p>
+        </div>
+        <button class="secondary light" id="open-report" type="button">Report an issue</button>
+        <div id="report-result" class="report-result" aria-live="polite"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Original synthetic reference · Not repair advice · No production or licensed catalog data</p>
+    </footer>
+
+    <dialog id="report-dialog">
+      <form method="dialog" id="report-form">
+        <div class="dialog-heading"><h2>Privacy-safe issue report</h2><button id="close-report" type="button" aria-label="Close">×</button></div>
+        <label>Workflow stage<select name="stage"><option value="input">Input</option><option value="confirmation">Confirmation</option><option value="catalog-union">Catalog union</option><option value="repair-path">Repair path</option></select></label>
+        <label>Category<select name="category"><option value="unexpected-result">Unexpected result</option><option value="missing-option">Missing option</option><option value="display-problem">Display problem</option><option value="other">Other</option></select></label>
+        <label>Optional note<textarea name="note" maxlength="300" rows="3" placeholder="Do not include identifiers or contact details."></textarea></label>
+        <p class="privacy-note">The raw note is never written to the aggregate report.</p>
+        <div class="button-row"><button class="secondary" id="cancel-report" type="button">Cancel</button><button class="primary" id="submit-report" type="submit" value="default">Submit safe report</button></div>
+      </form>
+    </dialog>
+  </body>
+</html>
