@@ -1,0 +1,25 @@
+name: clean-room-gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install exact dependency tree
+        run: npm ci --ignore-scripts
+      - name: Run public, secret, and behavior gates
+        run: npm run check
