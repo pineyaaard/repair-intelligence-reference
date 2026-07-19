@@ -352,7 +352,9 @@ export function createDemoServer(options = {}) {
   });
 }
 
-const isEntryPoint = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+const selfPath = fileURLToPath(import.meta.url);
+// pm2 fork mode loads this file through its ProcessContainerFork wrapper, so argv[1] is not this file.
+const isEntryPoint = process.argv[1] === selfPath || process.env.pm_exec_path === selfPath;
 if (isEntryPoint) {
   const port = Number(process.env.PORT || 4173);
   const server = createDemoServer();
