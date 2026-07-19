@@ -2,12 +2,28 @@ const state = {
   prefill: null,
   options: [],
   selectedOptionId: null,
-  config: null
+  reviewToken: null,
+  config: null,
+  revision: 0,
+  prefillRequestId: 0,
+  optionsRequestId: 0,
+  confirmRequestId: 0
 };
 
 const byId = (id) => document.getElementById(id);
 const form = byId('vehicle-form');
 const aiButton = byId('ai-prefill');
+const reviewFields = ['make', 'model', 'year', 'engineLiters', 'fuel', 'powerHp', 'transmission'];
+const numericFields = {
+  year: { label: 'Year', min: 1886, max: 2100, integer: true },
+  engineLiters: { label: 'Engine size', min: 0.1, max: 20, integer: false },
+  powerHp: { label: 'Power', min: 1, max: 5000, integer: true }
+};
+const canonicalFields = {
+  fuel: new Set(['diesel', 'petrol', 'electric', 'hybrid']),
+  transmission: new Set(['automatic', 'manual']),
+  repairNodeId: new Set(['front-brake-service', 'rear-brake-service'])
+};
 
 function anonymousClientId() {
   const key = 'repair-reference-session';
@@ -45,45 +61,114 @@ function writeStatus(id, message, tone = '') {
   node.className = `inline-status ${tone}`.trim();
 }
 
+function updateFieldValidity(control) {
+  const field = control?.name;
+  if (![...reviewFields, 'repairNodeId'].includes(field)) return;
+  const raw = String(control.value ?? '').trim();
+  let valid = raw !== '';
+  if (['make', 'model'].includes(field)) valid = valid && raw.length <= 80;
+  if (numericFields[field]) {
+    const rule = numericFields[field];
+    const value = Number(raw.replace(',', '.'));
+    valid = valid && Number.isFinite(value) && value >= rule.min && value <= rule.max && (!rule.integer || Number.isInteger(value));
+  }
+  if (canonicalFields[field]) valid = canonicalFields[field].has(raw.toLowerCase());
+  control.setAttribute('aria-invalid', String(!valid));
+}
+
 function setFormValues(prefill) {
   for (const [field, value] of Object.entries(prefill.values)) {
     if (form.elements[field]) form.elements[field].value = value ?? '';
   }
-  form.elements.repairNodeId.value = prefill.repairJob?.id === 'front-brake-service'
-    ? 'front-brake-service'
+  const supportedJobs = new Set(['front-brake-service', 'rear-brake-service']);
+  form.elements.repairNodeId.value = supportedJobs.has(prefill.repairJob?.id)
+    ? prefill.repairJob.id
     : 'unknown';
+  for (const field of [...reviewFields, 'repairNodeId']) updateFieldValidity(form.elements[field]);
 }
 
 function readFormValues() {
   const data = new FormData(form);
-  const numeric = new Set(['year', 'engineLiters', 'powerHp']);
-  const values = {};
-  for (const field of ['make', 'model', 'year', 'engineLiters', 'fuel', 'powerHp', 'transmission']) {
+  const values = Object.fromEntries(['make', 'model', 'fuel', 'transmission'].map((field) => {
     const raw = String(data.get(field) ?? '').trim();
-    values[field] = raw === '' ? undefined : numeric.has(field) ? Number(raw) : raw.toLowerCase();
+    return [field, raw === '' ? undefined : raw.toLowerCase()];
+  }));
+  for (const [field, rule] of Object.entries(numericFields)) {
+    const raw = String(data.get(field) ?? '').trim();
+    if (raw === '') {
+      values[field] = undefined;
+      continue;
+    }
+    const value = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(value) || value < rule.min || value > rule.max || (rule.integer && !Number.isInteger(value))) {
+      throw new Error(`${rule.label} must be a valid value between ${rule.min} and ${rule.max}.`);
+    }
+    values[field] = value;
   }
   return values;
 }
 
-function clearAfterPrefill() {
+function resetDecision(message = 'Confirm a synthetic catalog option to reveal the node, path, parts, and provenance.') {
   state.options = [];
   state.selectedOptionId = null;
+  state.reviewToken = null;
   byId('catalog-options').replaceChildren();
   byId('confirm-option').disabled = true;
   byId('repair-path').className = 'empty-state';
   byId('repair-path').replaceChildren(
     Object.assign(document.createElement('div'), { className: 'empty-icon', textContent: '→' }),
-    Object.assign(document.createElement('p'), { textContent: 'Confirm a synthetic catalog option to reveal the node, path, parts, and provenance.' })
+    Object.assign(document.createElement('p'), { textContent: message })
   );
-  byId('path-status').textContent = 'Awaiting confirmation';
+  byId('path-status').textContent = message.startsWith('Review changed') ? 'Review changed' : 'Awaiting confirmation';
   byId('path-status').className = 'status-pill neutral';
 }
 
+function invalidateDecision() {
+  state.revision += 1;
+  state.optionsRequestId += 1;
+  state.confirmRequestId += 1;
+  resetDecision('Review changed — search and confirm the visible options again.');
+  writeStatus('confirm-status', 'Review changed. Search the synthetic catalog again before confirming.', 'error');
+}
+
+function invalidatePrefill() {
+  state.prefillRequestId += 1;
+  state.revision += 1;
+  state.prefill = null;
+  resetDecision('Request changed — create and review a new prefill before searching.');
+  byId('find-options').disabled = true;
+  renderAIContribution(null, null);
+}
+
+function scrollToSection(id) {
+  const behavior = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+  byId(id).scrollIntoView({ behavior, block: 'start' });
+}
+
+function renderAIContribution(prefill, comparison) {
+  const node = byId('ai-contribution');
+  if (!comparison) {
+    node.hidden = true;
+    node.replaceChildren();
+    return;
+  }
+  const resolved = comparison.resolvedFields.map((field) => field.replace(/([A-Z])/g, ' $1').toLowerCase());
+  const details = [...resolved, ...(comparison.repairJobResolved ? ['repair job'] : [])];
+  node.hidden = false;
+  node.replaceChildren(
+    textNode('strong', '', `Live response: ${prefill.aiEvidence.servedModel}`),
+    document.createTextNode(` · ${comparison.localFieldCount}/7 local fields → ${comparison.aiFieldCount}/7 structured fields`),
+    textNode('div', '', details.length ? `Resolved from the same request: ${details.join(', ')}.` : 'No additional fields were inferred beyond the local baseline.')
+  );
+}
+
 async function runPrefill(mode, button) {
+  const requestId = ++state.prefillRequestId;
+  const revision = state.revision;
   setBusy(button, true, mode === 'ai' ? 'Requesting structured prefill…' : 'Parsing locally…');
   writeStatus('intake-status', '');
   try {
-    const { prefill } = await request('/api/prefill', {
+    const { prefill, comparison } = await request('/api/prefill', {
       method: 'POST',
       body: JSON.stringify({
         mode,
@@ -91,13 +176,17 @@ async function runPrefill(mode, button) {
         clientId: anonymousClientId()
       })
     });
+    if (requestId !== state.prefillRequestId || revision !== state.revision) return;
     state.prefill = prefill;
     setFormValues(prefill);
-    clearAfterPrefill();
+    state.revision += 1;
+    resetDecision();
     byId('find-options').disabled = false;
-    const source = mode === 'ai' ? `${state.config.model} Structured Output` : 'deterministic local parser';
-    writeStatus('intake-status', `Prefill ready via ${source}. Confidence indicator: ${Math.round(prefill.confidence * 100)}%. Review it below.`, 'success');
-    byId('confirm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const fieldCount = Object.values(prefill.values).filter((value) => value !== undefined).length;
+    const source = mode === 'ai' ? `${prefill.aiEvidence.servedModel} Structured Output` : 'deterministic local parser';
+    writeStatus('intake-status', `Prefill ready via ${source}. Extracted fields: ${fieldCount}/7. Review every value below.`, 'success');
+    renderAIContribution(prefill, comparison);
+    scrollToSection('confirm');
   } catch (error) {
     writeStatus('intake-status', error.message, 'error');
   } finally {
@@ -151,14 +240,23 @@ function renderOptions(options) {
 
 async function findOptions() {
   const button = byId('find-options');
+  const requestId = ++state.optionsRequestId;
+  const revision = state.revision;
+  resetDecision();
   setBusy(button, true, 'Building source union…');
   writeStatus('confirm-status', '');
   try {
-    const { options } = await request('/api/catalog-options', {
+    const { options, reviewToken } = await request('/api/catalog-options', {
       method: 'POST',
-      body: JSON.stringify({ values: readFormValues() })
+      body: JSON.stringify({
+        values: readFormValues(),
+        repairNodeId: form.elements.repairNodeId.value,
+        clientId: anonymousClientId()
+      })
     });
+    if (requestId !== state.optionsRequestId || revision !== state.revision) return;
     state.options = options;
+    state.reviewToken = reviewToken;
     state.selectedOptionId = null;
     byId('confirm-option').disabled = true;
     renderOptions(options);
@@ -205,6 +303,9 @@ function renderRepairPath(path, confirmation) {
   });
   const provenance = textNode('p', 'provenance-line', `Node provenance: ${path.catalogProvenance.join(' + ')}`);
   container.append(summary, textNode('h3', '', path.node.label), diagram, partsHeading, parts, provenance);
+  if (path.evidenceWarnings?.length) {
+    container.append(textNode('p', 'evidence-warning', `${path.evidenceWarnings.length} source conflict${path.evidenceWarnings.length === 1 ? '' : 's'} preserved for review.`));
+  }
   byId('path-status').textContent = 'Confirmed path';
   byId('path-status').className = 'status-pill available';
 }
@@ -212,6 +313,8 @@ function renderRepairPath(path, confirmation) {
 async function confirmOption() {
   const button = byId('confirm-option');
   if (!state.selectedOptionId) return;
+  const requestId = ++state.confirmRequestId;
+  const revision = state.revision;
   setBusy(button, true, 'Building confirmed path…');
   try {
     const result = await request('/api/confirm', {
@@ -220,16 +323,21 @@ async function confirmOption() {
         selectedOptionId: state.selectedOptionId,
         values: readFormValues(),
         repairNodeId: form.elements.repairNodeId.value,
+        clientId: anonymousClientId(),
+        reviewToken: state.reviewToken,
         explicitConfirmation: true
       })
     });
+    if (requestId !== state.confirmRequestId || revision !== state.revision) return;
     renderRepairPath(result.path, result.confirmation);
+    state.reviewToken = null;
     writeStatus('confirm-status', 'Selection confirmed. The repair path is now tied to that exact synthetic option.', 'success');
-    byId('path').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    scrollToSection('path');
   } catch (error) {
     writeStatus('confirm-status', error.message, 'error');
   } finally {
     setBusy(button, false);
+    if (!state.reviewToken) button.disabled = true;
   }
 }
 
@@ -265,11 +373,13 @@ async function initialize() {
     state.config = await request('/api/config');
     const status = byId('ai-status');
     status.textContent = state.config.aiPrefillAvailable
-      ? `${state.config.model} available · store:false`
-      : 'Offline mode ready · AI optional';
+      ? `${state.config.model} live · Structured Output · store:false`
+      : 'Deterministic demo ready · add a server key for GPT-5.6';
     status.classList.toggle('available', state.config.aiPrefillAvailable);
     aiButton.disabled = !state.config.aiPrefillAvailable;
     aiButton.textContent = `Prefill with ${state.config.model}`;
+    aiButton.className = state.config.aiPrefillAvailable ? 'primary' : 'secondary';
+    byId('local-prefill').className = state.config.aiPrefillAvailable ? 'secondary' : 'primary';
   } catch {
     byId('ai-status').textContent = 'Offline mode ready';
   }
@@ -279,6 +389,11 @@ byId('local-prefill').addEventListener('click', () => runPrefill('local', byId('
 aiButton.addEventListener('click', () => runPrefill('ai', aiButton));
 byId('find-options').addEventListener('click', findOptions);
 byId('confirm-option').addEventListener('click', confirmOption);
+byId('request-text').addEventListener('input', invalidatePrefill);
+form.addEventListener('input', (event) => {
+  updateFieldValidity(event.target);
+  invalidateDecision();
+});
 byId('open-report').addEventListener('click', () => byId('report-dialog').showModal());
 byId('close-report').addEventListener('click', () => byId('report-dialog').close());
 byId('cancel-report').addEventListener('click', () => byId('report-dialog').close());

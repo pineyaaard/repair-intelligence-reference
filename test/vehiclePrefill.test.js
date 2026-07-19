@@ -26,6 +26,29 @@ test('deterministic prefill also proposes a supported repair job', () => {
   assert.equal(prefill.confirmationRequired, true);
 });
 
+test('deterministic prefill distinguishes the rear brake job', () => {
+  const prefill = parseVehiclePrefill('brand-a series-1 2017; rear brake pads');
+  assert.equal(prefill.repairJob.id, 'rear-brake-service');
+  assert.equal(prefill.confirmationRequired, true);
+});
+
+test('Czech contrast sample reports honest field coverage instead of confidence', () => {
+  const prefill = parseVehiclePrefill(
+    'potřebuji přední brzdy: brand-a series-1, rok 2017, nafta, objem dva litry, 190 koní, automat'
+  );
+  assert.equal(prefill.fieldCoverage, 0.43);
+  assert.deepEqual(prefill.values, {
+    make: 'brand-a',
+    model: 'series-1',
+    year: 2017,
+    engineLiters: undefined,
+    fuel: undefined,
+    powerHp: undefined,
+    transmission: undefined
+  });
+  assert.equal(prefill.repairJob.id, 'unknown');
+});
+
 test('confirmation requires a user-selected catalog option', () => {
   const prefill = parseVehiclePrefill('brand-a series-1 2017');
   assert.throws(() => confirmVehicleChoice(prefill), /must be selected/);

@@ -1,93 +1,126 @@
-# Demo Video Script (2:30 target)
+# Demo Video Script (2:42 target, hard cap 3:00)
 
-Record only the synthetic browser UI and a final test result. Keep personal tabs,
-terminal history, environment values, bookmarks, notifications, and private
-repositories out of frame.
+Record only the synthetic browser UI, a clean test result, and a brief safe view
+of the primary Codex build task. Keep personal tabs, environment values,
+notifications, private repositories, and production systems out of frame. Use
+1280×720 or higher at 30 fps. Do not use copyrighted music.
 
-## 0:00–0:15 — Problem and promise
+The GPT-5.6 segment must be a real completed API response. Run the live synthetic
+eval before recording; do not use a mock, fallback result, or configured model
+label as proof. The UI must show the served model returned by the response.
 
-**Screen:** Hero and four-stage navigation.
+## Synthetic camera inputs
 
-**Voice:** “Repair requests arrive as incomplete sentences, while catalog choices
-need exact identity. This demo uses AI for language understanding, but keeps the
-final vehicle decision human-confirmed and fully reviewable.”
+English baseline already present in the textarea:
 
-## 0:15–0:38 — Zero-key path
+```text
+brand-a series-1 2017 2.0 diesel 190 hp automatic; front brake service
+```
 
-**Screen:** AI status says offline mode ready. Click **Parse locally**.
+Czech contrast sample:
 
-**Voice:** “The entire workflow works without an account or API key. A deterministic
-local parser creates a proposed prefill, and the interface immediately moves to a
-visible review step.”
+```text
+potřebuji přední brzdy: brand-a series-1, rok 2017, nafta, objem dva litry, 190 koní, automat
+```
 
-## 0:38–0:58 — Live GPT-5.6 evidence
+Show this English subtitle while the Czech text is on screen:
 
-**Screen:** Before recording, configure a reviewed server-side key and safety
-salt. Return to the top, show the status pill reporting GPT-5.6 available, click
-**Prefill with GPT-5.6**, and keep the successful green “Prefill ready via
-GPT-5.6 Structured Output” result visible together with the populated editable
-fields. A disabled button, local-parser result, mock, or failed request is not
-acceptable evidence; do not finalize the video until a real response succeeds.
+```text
+Need front brakes for brand-a series-1, 2017, diesel, two liters, 190 hp, automatic.
+```
 
-**Voice:** “When enabled, GPT-5.6 uses the Responses API and strict Structured
-Outputs for this bounded extraction step. Requests use store false and a hashed
-anonymous safety identifier. The model never sees the synthetic sources and can’t
-select an option.”
+## 0:00–0:12 — Problem, audience, promise
 
-## 0:58–1:22 — Human confirmation gate
+**Screen:** Hero, synthetic-data badge, and four-stage navigation.
 
-**Screen:** Review the editable fields, click **Find synthetic options**, select
-the first card, then pause before the confirm button.
+**Voice:** “Workshop requests arrive as incomplete sentences, but parts desks
+need exact identity. Repair Intelligence Reference uses GPT-5.6 for multilingual
+intake while deterministic evidence and one human decision protect the catalog
+choice.”
 
-**Voice:** “Prefill is not fitment. A person can correct every field, compare the
-visible options, and choose the exact variant. Exact duplicates merge, but source
-provenance remains visible and a distinct variant is never hidden.”
+## 0:12–0:42 — Measurable GPT-5.6 moment
 
-## 1:22–1:47 — Visual repair path
+**Screen:** Paste the Czech sample and show its English subtitle. Click **Parse
+locally**: make, model, and year fill; four fields remain visibly unresolved and
+the job needs confirmation. Then click **Prefill with GPT-5.6**. Hold on the live
+served-model card showing `3/7 local fields → 7/7 structured fields`, the resolved
+field names, and the populated editable form.
 
-**Screen:** Click **Confirm selected option and build path**. Slowly show the
-confirmed summary, diagram, parts rows, and provenance.
+**Voice:** “The local baseline understands only three of seven fields. On the
+same Czech request, a real GPT-5.6 Responses API call with strict Structured
+Outputs resolves engine, fuel, power, transmission, and the repair job. The
+server enforces canonical enums and numeric ranges again after the schema, uses
+store false, and never exposes the key to the browser.”
 
-**Voice:** “Only explicit confirmation unlocks the deterministic repair path. The
-result explains the node sequence, synthetic parts, and which sources contributed
-each item. The model is outside this decision.”
+## 0:42–1:10 — Review and hard confirmation gate
 
-## 1:47–2:08 — Privacy-safe issue report
+**Screen:** Point at the editable fields. Click **Find synthetic options**, hover
+both variants and their provenance, choose P1, pause, then confirm.
 
-**Screen:** Click **Report an issue**, choose catalog union and missing option,
-enter “The expected variant is missing,” and submit.
+**Voice:** “Prefill is not fitment. A person can correct every field, compare
+both visible variants, and choose one explicitly. The server binds that exact
+review to a short-lived, one-use token. A direct, stale, changed, or replayed
+confirmation is rejected.”
 
-**Voice:** “Issue reporting follows the same boundary. Optional note text is
-discarded. The receipt keeps only a generic stage, category, count, redacted
-fingerprint, and a human-review state. It cannot auto-fix code.”
+## 1:10–1:36 — Deterministic path and evidence
 
-## 2:08–2:25 — Verification and Codex
+**Screen:** Show the confirmed summary, node diagram, three part rows, and source
+provenance.
 
-**Screen:** Show a clean `npm run check` result, then the short “How Codex was
-used” section in `BUILD_WEEK.md`.
+**Voice:** “Only that confirmed review unlocks the deterministic path. Exact
+duplicates merge, distinct variants remain visible, and each node and synthetic
+part keeps its source evidence. GPT-5.6 is outside this decision.”
 
-**Voice:** “Offline tests cover the no-key browser API, the confirmation conflict,
-strict Structured Output payload, privacy rejection, deterministic source union,
-error aggregation, secret scanning, and public-scope scanning. I used Codex to
-build and review this clean-room workflow, its tests, safety boundaries, and
-submission documentation.”
+## 1:36–1:54 — Second job proves generality
 
-## 2:25–2:38 — Track and close
+**Screen:** Change the job to **Rear brake service**. The old path must disappear
+and show “Review changed.” Search again, reselect P1, confirm, and show the rear
+path with different parts.
 
-**Screen:** Return to the four-stage UI. Show a simple end card: “OpenAI Build
-Week · Work and Productivity · GPT-5.6 + Codex.”
+**Voice:** “Changing the job invalidates the old decision instead of leaving a
+stale confirmed path. The second job repeats the same review gate and builds a
+different evidence-backed route.”
 
-**Voice:** “AI interprets the request. Deterministic code preserves the evidence.
-A person owns the decision. This is my Work and Productivity track entry.”
+## 1:54–2:10 — Privacy-safe issue report
 
-## Submission handoff — do not narrate or record placeholders
+**Screen:** Report a catalog-union / missing-option issue. Enter “The expected
+variant is missing,” submit, and show the aggregate receipt.
+
+**Voice:** “Issue reporting follows the same boundary. The note is discarded.
+Only a generic category, count, and redacted fingerprint remain for human triage;
+the report cannot change code automatically.”
+
+## 2:10–2:28 — Verification and concrete Codex contribution
+
+**Screen:** Show the final lines of a clean `npm run check`, then a safe cropped
+view of the primary Product Factory Codex task or the README Codex section. Never
+show private prompts, paths, tabs, or production details.
+
+**Voice:** “Codex scaffolded and reviewed the browser-server workflow, generated
+adversarial contract and privacy tests, traced a stale confirmation-state bug,
+and caught a prompt-only canonicalization gap. Those failures became revision
+guards, schema and semantic checks, review-token tests, and broader publication
+scanners.”
+
+## 2:28–2:42 — Impact and close
+
+**Screen:** Return to the completed UI, then a clean end card: “OpenAI Build Week
+· Work and Productivity · GPT-5.6 + Codex.”
+
+**Voice:** “A wrong identity means a returned part, a repeat appointment, and
+lost workshop time. AI interprets the request, deterministic code preserves the
+evidence, and a person owns the decision.”
+
+## Submission handoff — never narrate placeholders
 
 - **Track:** Work and Productivity
-- **Repository URL:** `https://github.com/pineyaaard/repair-intelligence-reference`
-- **Demo video URL:** Supplied directly in the Devpost submission.
-- **/feedback Session ID:** Supplied directly in the Devpost submission from the
-  final `/feedback` response.
-- **Entrant identity:** Supplied directly in the Devpost submission.
+- **Repository:** `https://github.com/pineyaaard/repair-intelligence-reference`
+- **Video:** upload to YouTube as **Public**, not Unlisted
+- **/feedback Session ID:** obtain from the primary Product Factory build task,
+  where most core functionality was created
+- **Entrant identity:** provide directly in Devpost
+- **Deadline:** 21 Jul 2026 17:00 PDT / 22 Jul 2026 02:00 CEST
 
-The Session ID must come from the actual `/feedback` action; do not invent it for
-the script or end card. Paste all submission-only values directly into Devpost.
+All submitted materials must be English or include an English translation. Keep
+the working project available through the judging period. Do not claim real
+fitment coverage, customers, production deployment, or licensed catalog access.
