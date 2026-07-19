@@ -169,6 +169,7 @@ to other workflows where free text meets an exact catalog.
 | `BUILD_WEEK.md` | Ready-to-customize competition submission copy |
 | `docs/demo-video-storyboard.md` | Under-three-minute recording script |
 | `PUBLIC_SCOPE.md` | Publication boundary and deliberate exclusions |
+| `LICENSE` | MIT License for the original material in this repository |
 
 ## Verification
 
@@ -260,6 +261,7 @@ Submission-only values are deliberately not invented or committed here:
 This project demonstrates workflow mechanics, not real fitment. It is not a
 repair manual, catalog, estimator, diagnostic tool, or parts recommendation.
 See [SECURITY.md](SECURITY.md), [PUBLIC_SCOPE.md](PUBLIC_SCOPE.md), and the
-[proprietary evaluation license](LICENSE). All original material is provided
-for contest evaluation only; no general-use, copying, derivative-work, AI
-training, or commercial license is granted.
+[MIT License](LICENSE). The license permits reuse of the original material in
+this repository; it does not change the synthetic-data boundary or grant rights
+to any production, private, confidential, or third-party material, none of which
+is included here.

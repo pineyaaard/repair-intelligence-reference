@@ -162,6 +162,8 @@ final `/feedback` response.
 **Built with:** Node.js 20, browser-native JavaScript, OpenAI Responses API,
 GPT-5.6, Structured Outputs, Codex
 
+**License:** MIT
+
 **Team:** Supplied directly in the Devpost submission.
 
 ## Evidence for judges
@@ -182,6 +184,8 @@ GPT-5.6, Structured Outputs, Codex
   / 22 Jul 2026 02:00 CEST**.
 - Upload the under-three-minute video as **Public** on YouTube, not Unlisted.
 - Confirm the repository and video links point to the reviewed clean-room revision.
+- Confirm the repository displays the MIT License and the synthetic/privacy
+  boundaries remain accurate.
 - Paste the reviewed public repository and video links into Devpost, then paste
   the exact Session ID returned by `/feedback`; do not guess or reuse a value.
 - Use only synthetic UI footage from this repository.

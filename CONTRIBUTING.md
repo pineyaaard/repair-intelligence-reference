@@ -1,13 +1,9 @@
 # Contributing
 
-This is a proprietary, all-rights-reserved reference project. Unsolicited code,
-documentation, designs, or other contributions are not accepted. Before
-submitting any pull request, obtain written approval from the repository owner
-and complete the separate contribution or assignment agreement requested by
-the owner. Opening an issue or discussion does not grant a license to use the
-project.
-
-The checklist below applies only after that written approval.
+This project is released under the [MIT License](LICENSE). Before submitting a
+pull request, confirm that you have the right to contribute the material and
+agree that it will be distributed under the same MIT License. Opening an issue
+or pull request does not obligate the maintainers to accept it.
 
 ## Before proposing a change
 

@@ -2,6 +2,9 @@
 
 This repository is a newly written clean-room demonstrator. It may be published
 only after the automated gates and final human review in `RELEASE_CHECKLIST.md`.
+The original material that passes that publication boundary is released under
+the [MIT License](LICENSE). That source-code license does not make excluded
+private, confidential, production, or third-party material part of this project.
 
 ## Included
 
