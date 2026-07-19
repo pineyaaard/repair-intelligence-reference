@@ -4,9 +4,18 @@ import { assertSafeVehicleText } from './privacy.js';
 const RESPONSES_ENDPOINT = 'https://api.openai.com/v1/responses';
 const DEFAULT_MODEL = 'gpt-5.6';
 
+const CANONICAL_FUELS = Object.freeze(['diesel', 'petrol', 'electric', 'hybrid']);
+const CANONICAL_TRANSMISSIONS = Object.freeze(['automatic', 'manual']);
+const REPAIR_JOB_LABELS = Object.freeze({
+  'front-brake-service': 'Front brake service',
+  'rear-brake-service': 'Rear brake service',
+  unknown: 'Job needs confirmation'
+});
+
 const nullableString = { type: ['string', 'null'] };
 const nullableNumber = { type: ['number', 'null'] };
 const nullableInteger = { type: ['integer', 'null'] };
+const nullableEnum = (values) => ({ type: ['string', 'null'], enum: [...values, null] });
 
 export const PREFILL_SCHEMA = Object.freeze({
   type: 'object',
@@ -18,9 +27,9 @@ export const PREFILL_SCHEMA = Object.freeze({
         model: nullableString,
         year: nullableInteger,
         engineLiters: nullableNumber,
-        fuel: nullableString,
+        fuel: nullableEnum(CANONICAL_FUELS),
         powerHp: nullableInteger,
-        transmission: nullableString
+        transmission: nullableEnum(CANONICAL_TRANSMISSIONS)
       },
       required: ['make', 'model', 'year', 'engineLiters', 'fuel', 'powerHp', 'transmission'],
       additionalProperties: false
@@ -28,7 +37,7 @@ export const PREFILL_SCHEMA = Object.freeze({
     repairJob: {
       type: 'object',
       properties: {
-        id: { type: 'string', enum: ['front-brake-service', 'unknown'] },
+        id: { type: 'string', enum: Object.keys(REPAIR_JOB_LABELS) },
         label: { type: 'string' }
       },
       required: ['id', 'label'],
@@ -54,8 +63,27 @@ export function safetyIdentifier(clientId, salt) {
   return createHmac('sha256', salt).update(validateClientId(clientId)).digest('hex');
 }
 
-function normalizeNullable(value) {
-  return value === null ? undefined : value;
+function normalizeText(value, field) {
+  if (value === null) return undefined;
+  if (typeof value !== 'string') {
+    throw new Error(`AI prefill returned an invalid ${field}. Use local prefill instead.`);
+  }
+  const normalized = value.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (normalized.length === 0 || normalized.length > 80) {
+    throw new Error(`AI prefill returned an invalid ${field}. Use local prefill instead.`);
+  }
+  return normalized;
+}
+
+function normalizeNumber(value, field, { min, max, integer = false }) {
+  if (value === null) return undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < min || value > max) {
+    throw new Error(`AI prefill returned an invalid ${field}. Use local prefill instead.`);
+  }
+  if (integer && !Number.isInteger(value)) {
+    throw new Error(`AI prefill returned an invalid ${field}. Use local prefill instead.`);
+  }
+  return value;
 }
 
 function validateStructuredPrefill(value) {
@@ -65,18 +93,19 @@ function validateStructuredPrefill(value) {
 
   const source = value.values;
   const result = {
-    make: normalizeNullable(source.make),
-    model: normalizeNullable(source.model),
-    year: normalizeNullable(source.year),
-    engineLiters: normalizeNullable(source.engineLiters),
-    fuel: normalizeNullable(source.fuel),
-    powerHp: normalizeNullable(source.powerHp),
-    transmission: normalizeNullable(source.transmission)
+    make: normalizeText(source.make, 'make'),
+    model: normalizeText(source.model, 'model'),
+    year: normalizeNumber(source.year, 'year', { min: 1886, max: 2100, integer: true }),
+    engineLiters: normalizeNumber(source.engineLiters, 'engine size', { min: 0.1, max: 20 }),
+    fuel: normalizeText(source.fuel, 'fuel'),
+    powerHp: normalizeNumber(source.powerHp, 'power', { min: 1, max: 5000, integer: true }),
+    transmission: normalizeText(source.transmission, 'transmission')
   };
-  const validScalars = Object.values(result).every(
-    (item) => item === undefined || ['string', 'number'].includes(typeof item)
-  );
-  if (!validScalars || !['front-brake-service', 'unknown'].includes(value.repairJob.id)) {
+  if (
+    (result.fuel !== undefined && !CANONICAL_FUELS.includes(result.fuel)) ||
+    (result.transmission !== undefined && !CANONICAL_TRANSMISSIONS.includes(result.transmission)) ||
+    !Object.hasOwn(REPAIR_JOB_LABELS, value.repairJob.id)
+  ) {
     throw new Error('AI prefill returned invalid field values. Use local prefill instead.');
   }
 
@@ -86,16 +115,19 @@ function validateStructuredPrefill(value) {
     values: result,
     repairJob: {
       id: value.repairJob.id,
-      label: String(value.repairJob.label || 'Job needs confirmation').slice(0, 80)
+      label: REPAIR_JOB_LABELS[value.repairJob.id]
     },
     missingRequired: required.filter((field) => result[field] === undefined),
-    confidence: Number((present / Object.keys(result).length).toFixed(2)),
+    fieldCoverage: Number((present / Object.keys(result).length).toFixed(2)),
     confirmationRequired: true,
     parser: 'openai-responses-structured-prefill'
   };
 }
 
 function extractStructuredOutputText(body) {
+  if (body?.status === 'incomplete') {
+    throw new Error('AI prefill was incomplete. Use local prefill instead.');
+  }
   if (!body || typeof body !== 'object' || body.status !== 'completed' || !Array.isArray(body.output)) {
     throw new Error('AI prefill returned an invalid response envelope. Use local prefill instead.');
   }
@@ -122,6 +154,9 @@ function extractStructuredOutputText(body) {
   }
 
   const [part] = message.content;
+  if (part?.type === 'refusal') {
+    throw new Error('AI prefill declined this request. Review the text or use local prefill instead.');
+  }
   if (
     !part ||
     typeof part !== 'object' ||
@@ -163,7 +198,7 @@ export async function requestOpenAIPrefill({
         safety_identifier: safetyIdentifier(clientId, safetySalt),
         reasoning: { effort: 'low' },
         instructions:
-          'Extract only the explicitly stated generic vehicle fields and repair intent. Use null when absent. Never choose a catalog record. Map a front brake job to front-brake-service; otherwise use unknown.',
+          'Extract only explicitly stated generic vehicle fields and repair intent from a request in any language. Use null when a field is absent; never guess a catalog record. Return make and model as lowercase tokens. Return fuel only as diesel, petrol, electric, or hybrid. Return transmission only as automatic or manual. Convert explicitly stated words and units to numeric year, engineLiters, and powerHp. Map a front brake job to front-brake-service, a rear brake job to rear-brake-service, and every other job to unknown.',
         input: safeText,
         text: {
           format: {
@@ -180,7 +215,16 @@ export async function requestOpenAIPrefill({
       throw new Error('AI prefill is temporarily unavailable. Use local prefill instead.');
     }
     const body = await response.json();
-    return validateStructuredPrefill(JSON.parse(extractStructuredOutputText(body)));
+    if (typeof body.model !== 'string' || body.model.trim() === '') {
+      throw new Error('AI prefill returned no served-model evidence. Use local prefill instead.');
+    }
+    return {
+      ...validateStructuredPrefill(JSON.parse(extractStructuredOutputText(body))),
+      aiEvidence: {
+        servedModel: body.model.trim(),
+        responseStatus: body.status
+      }
+    };
   } catch (error) {
     if (error?.name === 'AbortError') {
       throw new Error('AI prefill timed out. Use local prefill instead.');

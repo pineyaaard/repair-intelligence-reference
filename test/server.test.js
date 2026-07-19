@@ -56,8 +56,11 @@ test('browser API is fully functional without an OpenAI key', async (t) => {
   assert.equal(prefill.body.prefill.values.model, 'series-1');
   assert.equal(prefill.body.prefill.confirmationRequired, true);
 
+  const clientId = 'anonymousbrowserid00000000000010';
   const options = await jsonRequest(server, 'POST', '/api/catalog-options', {
-    values: prefill.body.prefill.values
+    values: prefill.body.prefill.values,
+    repairNodeId: 'front-brake-service',
+    clientId
   });
   assert.equal(options.status, 200);
   assert.equal(options.body.options.length, 2);
@@ -70,18 +73,45 @@ test('browser API is fully functional without an OpenAI key', async (t) => {
   });
   assert.equal(blocked.status, 409);
 
+  const noReview = await jsonRequest(server, 'POST', '/api/confirm', {
+    selectedOptionId: options.body.options[0].id,
+    values: prefill.body.prefill.values,
+    repairNodeId: 'front-brake-service',
+    clientId,
+    explicitConfirmation: true
+  });
+  assert.equal(noReview.status, 409);
+
+  const wrongValues = { ...prefill.body.prefill.values, model: 'series-that-does-not-exist' };
+  const wrongReview = await jsonRequest(server, 'POST', '/api/catalog-options', {
+    values: wrongValues,
+    repairNodeId: 'front-brake-service',
+    clientId
+  });
   const wrongVisibleSet = await jsonRequest(server, 'POST', '/api/confirm', {
     selectedOptionId: options.body.options[0].id,
-    values: { ...prefill.body.prefill.values, model: 'series-that-does-not-exist' },
+    values: wrongValues,
     repairNodeId: 'front-brake-service',
+    clientId,
+    reviewToken: wrongReview.body.reviewToken,
     explicitConfirmation: true
   });
   assert.equal(wrongVisibleSet.status, 404);
 
+  const unknownReview = await jsonRequest(server, 'POST', '/api/catalog-options', {
+    values: prefill.body.prefill.values,
+    repairNodeId: 'unknown',
+    clientId
+  });
+  assert.equal(unknownReview.status, 400);
+  assert.match(unknownReview.body.error, /supported repair job/);
+  assert.equal(Object.hasOwn(unknownReview.body, 'reviewToken'), false);
   const unknownJob = await jsonRequest(server, 'POST', '/api/confirm', {
     selectedOptionId: options.body.options[0].id,
     values: prefill.body.prefill.values,
     repairNodeId: 'unknown',
+    clientId,
+    reviewToken: options.body.reviewToken,
     explicitConfirmation: true
   });
   assert.equal(unknownJob.status, 400);
@@ -90,11 +120,120 @@ test('browser API is fully functional without an OpenAI key', async (t) => {
     selectedOptionId: options.body.options[0].id,
     values: prefill.body.prefill.values,
     repairNodeId: 'front-brake-service',
+    clientId,
+    reviewToken: options.body.reviewToken,
     explicitConfirmation: true
   });
   assert.equal(confirmed.status, 200);
   assert.equal(confirmed.body.confirmation.confirmationSource, 'explicit-user-selection');
   assert.equal(confirmed.body.path.parts.length, 3);
+
+  const replay = await jsonRequest(server, 'POST', '/api/confirm', {
+    selectedOptionId: options.body.options[0].id,
+    values: prefill.body.prefill.values,
+    repairNodeId: 'front-brake-service',
+    clientId,
+    reviewToken: options.body.reviewToken,
+    explicitConfirmation: true
+  });
+  assert.equal(replay.status, 409);
+});
+
+test('a second supported repair job builds its own confirmed path', async (t) => {
+  const server = await startServer();
+  t.after(() => server.close());
+
+  const values = { make: 'brand-a', model: 'series-1', year: 2017 };
+  const clientId = 'anonymousbrowserid00000000000011';
+  const options = await jsonRequest(server, 'POST', '/api/catalog-options', {
+    values,
+    repairNodeId: 'rear-brake-service',
+    clientId
+  });
+  const rear = await jsonRequest(server, 'POST', '/api/confirm', {
+    selectedOptionId: options.body.options[0].id,
+    values,
+    repairNodeId: 'rear-brake-service',
+    clientId,
+    reviewToken: options.body.reviewToken,
+    explicitConfirmation: true
+  });
+
+  assert.equal(rear.status, 200);
+  assert.equal(rear.body.path.node.id, 'rear-brake-service');
+  assert.equal(rear.body.path.parts.length, 3);
+  assert.deepEqual(rear.body.path.catalogProvenance, ['source-alpha', 'source-beta']);
+});
+
+test('review tokens expire and cannot confirm an old visible set', async (t) => {
+  let clock = 1_000;
+  const server = await startServer({ now: () => clock, reviewTokenSecret: 'unit-test-review-secret' });
+  t.after(() => server.close());
+  const values = { make: 'brand-a', model: 'series-1', year: 2017 };
+  const clientId = 'anonymousbrowserid00000000000013';
+  const options = await jsonRequest(server, 'POST', '/api/catalog-options', {
+    values,
+    repairNodeId: 'front-brake-service',
+    clientId
+  });
+  clock += 5 * 60 * 1000 + 1;
+  const response = await jsonRequest(server, 'POST', '/api/confirm', {
+    selectedOptionId: options.body.options[0].id,
+    values,
+    repairNodeId: 'front-brake-service',
+    clientId,
+    reviewToken: options.body.reviewToken,
+    explicitConfirmation: true
+  });
+  assert.equal(response.status, 409);
+});
+
+test('consumed review tokens are bounded fail-closed and pruned after their TTL', async (t) => {
+  let clock = 2_000;
+  const server = await startServer({
+    now: () => clock,
+    reviewTokenSecret: 'unit-test-bounded-review-secret',
+    maxConsumedReviewTokens: 1
+  });
+  t.after(() => server.close());
+  const values = { make: 'brand-a', model: 'series-1', year: 2017 };
+  const clientId = 'anonymousbrowserid00000000000014';
+  const review = async () => jsonRequest(server, 'POST', '/api/catalog-options', {
+    values,
+    repairNodeId: 'front-brake-service',
+    clientId
+  });
+  const confirm = async (options) => jsonRequest(server, 'POST', '/api/confirm', {
+    selectedOptionId: options.body.options[0].id,
+    values,
+    repairNodeId: 'front-brake-service',
+    clientId,
+    reviewToken: options.body.reviewToken,
+    explicitConfirmation: true
+  });
+
+  const first = await review();
+  const second = await review();
+  assert.equal((await confirm(first)).status, 200);
+  const atCapacity = await confirm(second);
+  assert.equal(atCapacity.status, 503);
+  assert.match(atCapacity.body.error, /capacity is temporarily full/);
+
+  clock += 5 * 60 * 1000 + 1;
+  const afterTtl = await review();
+  assert.equal((await confirm(afterTtl)).status, 200);
+});
+
+test('catalog review rejects invalid numeric criteria instead of silently broadening', async (t) => {
+  const server = await startServer();
+  t.after(() => server.close());
+  const response = await jsonRequest(server, 'POST', '/api/catalog-options', {
+    values: { make: 'brand-a', model: 'series-1', year: null, engineLiters: '2,0' },
+    repairNodeId: 'front-brake-service',
+    clientId: 'anonymousbrowserid00000000000012'
+  });
+  assert.equal(response.status, 400);
+  assert.match(response.body.error, /engineLiters must be a valid value/);
 });
 
 test('issue report retains only a generic aggregate, not the optional note', async (t) => {
@@ -125,6 +264,7 @@ test('optional AI route is server-side and preserves the same human-gated prefil
         ok: true,
         async json() {
           return {
+            model: 'gpt-5.6-2026-07-01',
             status: 'completed',
             output: [{
               type: 'message',
@@ -156,12 +296,19 @@ test('optional AI route is server-side and preserves the same human-gated prefil
   const response = await jsonRequest(server, 'POST', '/api/prefill', {
     mode: 'ai',
     clientId: 'anonymousbrowserid00000000000004',
-    text: 'brand-a series-1 2017 2.0 diesel 190 hp automatic; front brake service'
+    text: 'potřebuji přední brzdy: brand-a series-1, rok 2017, nafta, objem dva litry, 190 koní, automat'
   });
   assert.equal(response.status, 200);
   assert.equal(response.body.prefill.confirmationRequired, true);
   assert.equal(outboundPayload.store, false);
   assert.equal(outboundPayload.text.format.strict, true);
+  assert.equal(response.body.prefill.aiEvidence.servedModel, 'gpt-5.6-2026-07-01');
+  assert.equal(response.body.comparison.localFieldCount, 3);
+  assert.equal(response.body.comparison.aiFieldCount, 7);
+  assert.deepEqual(response.body.comparison.resolvedFields, [
+    'engineLiters', 'fuel', 'powerHp', 'transmission'
+  ]);
+  assert.equal(response.body.comparison.repairJobResolved, true);
 });
 
 test('browser assets expose the complete four-stage workflow without a browser-side API key', async () => {
@@ -174,5 +321,8 @@ test('browser assets expose the complete four-stage workflow without a browser-s
   assert.match(html, /id="path-status"/);
   assert.equal(browserCode.includes('OPENAI_API_KEY'), false);
   assert.match(browserCode, /explicitConfirmation: true/);
+  assert.match(browserCode, /reviewToken: state\.reviewToken/);
+  assert.match(browserCode, /Review changed/);
+  assert.match(browserCode, /updateFieldValidity\(event\.target\)/);
   assert.match(browserCode, /path-status'\)\.textContent = 'Confirmed path'/);
 });

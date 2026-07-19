@@ -65,10 +65,12 @@ export function unionVehicleOptions(criteria = {}, sources = CATALOG_SOURCES) {
 }
 
 export function sourceVehiclesForOption(option, sources = CATALOG_SOURCES) {
-  const ids = new Set(option.sourceRecords.map((record) => record.recordId));
+  const records = new Set(
+    option.sourceRecords.map((record) => `${record.sourceId}\u0000${record.recordId}`)
+  );
   return sources.flatMap((source) =>
     source.vehicles
-      .filter((vehicle) => ids.has(vehicle.id))
+      .filter((vehicle) => records.has(`${source.id}\u0000${vehicle.id}`))
       .map((vehicle) => ({ source, vehicle }))
-  );
+  ).sort((a, b) => a.source.priority - b.source.priority || a.source.id.localeCompare(b.source.id));
 }

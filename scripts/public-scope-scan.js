@@ -1,16 +1,41 @@
 #!/usr/bin/env node
 import { readFile, readdir } from 'node:fs/promises';
-import { join, relative } from 'node:path';
+import { extname, join, relative, resolve } from 'node:path';
 import process from 'node:process';
 
 const root = process.cwd();
-const privateDenylistPath = join(root, '.private-public-scope-denylist.txt');
+const privateDenylistPath = process.env.PUBLIC_SCOPE_PRIVATE_DENYLIST_PATH
+  ? resolve(process.env.PUBLIC_SCOPE_PRIVATE_DENYLIST_PATH)
+  : join(root, '.private-public-scope-denylist.txt');
 const scannerPaths = new Set([
   join(root, 'scripts', 'public-scope-scan.js'),
   join(root, 'scripts', 'secret-scan.js'),
   privateDenylistPath
 ]);
-const textExtensions = new Set(['.js', '.json', '.md', '.txt', '.example', '.yml', '.yaml', '.css', '.html']);
+const textExtensions = new Set([
+  '.bash',
+  '.cjs',
+  '.css',
+  '.cts',
+  '.example',
+  '.html',
+  '.js',
+  '.json',
+  '.jsx',
+  '.md',
+  '.mjs',
+  '.mts',
+  '.sh',
+  '.svg',
+  '.toml',
+  '.ts',
+  '.tsx',
+  '.txt',
+  '.xml',
+  '.yaml',
+  '.yml',
+  '.zsh'
+]);
 const specialTextNames = new Set(['.gitignore', 'LICENSE']);
 
 const genericRiskRules = [
@@ -30,13 +55,9 @@ const allowedPublicUrls = [
   /^http:\/\/local\.invalid$/
 ];
 
-function extensionOf(name) {
-  const index = name.lastIndexOf('.');
-  return index === -1 ? '' : name.slice(index);
-}
-
 function shouldScan(name) {
-  return specialTextNames.has(name) || textExtensions.has(extensionOf(name));
+  const envFile = name === '.env' || name.startsWith('.env.');
+  return envFile || specialTextNames.has(name) || textExtensions.has(extname(name));
 }
 
 async function walk(directory) {

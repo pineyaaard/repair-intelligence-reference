@@ -8,7 +8,30 @@ const scannerPaths = new Set([
   join(root, 'scripts', 'public-scope-scan.js'),
   join(root, 'scripts', 'secret-scan.js')
 ]);
-const textExtensions = new Set(['.js', '.json', '.md', '.txt', '.example', '.yml', '.yaml', '.css', '.html']);
+const textExtensions = new Set([
+  '.bash',
+  '.cjs',
+  '.css',
+  '.cts',
+  '.example',
+  '.html',
+  '.js',
+  '.json',
+  '.jsx',
+  '.md',
+  '.mjs',
+  '.mts',
+  '.sh',
+  '.svg',
+  '.toml',
+  '.ts',
+  '.tsx',
+  '.txt',
+  '.xml',
+  '.yaml',
+  '.yml',
+  '.zsh'
+]);
 const textNames = new Set(['.gitignore', 'LICENSE']);
 
 const rules = [
@@ -34,7 +57,12 @@ async function walk(directory) {
     else if (
       entry.isFile() &&
       !scannerPaths.has(path) &&
-      (textNames.has(entry.name) || textExtensions.has(extname(entry.name)))
+      (
+        entry.name === '.env' ||
+        entry.name.startsWith('.env.') ||
+        textNames.has(entry.name) ||
+        textExtensions.has(extname(entry.name))
+      )
     ) {
       files.push(path);
     }

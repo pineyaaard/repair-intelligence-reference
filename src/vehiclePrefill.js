@@ -38,6 +38,9 @@ function readTransmission(text) {
 }
 
 function readRepairJob(text) {
+  if (text.includes('rear brake')) {
+    return { id: 'rear-brake-service', label: 'Rear brake service' };
+  }
   if (text.includes('front brake')) {
     return { id: 'front-brake-service', label: 'Front brake service' };
   }
@@ -66,7 +69,7 @@ export function parseVehiclePrefill(message) {
     values,
     repairJob: readRepairJob(text),
     missingRequired: required.filter((field) => values[field] === undefined),
-    confidence: Number((present / Object.keys(values).length).toFixed(2)),
+    fieldCoverage: Number((present / Object.keys(values).length).toFixed(2)),
     confirmationRequired: true,
     parser: 'deterministic-offline-reference'
   };

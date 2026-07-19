@@ -3,20 +3,21 @@
   "version": "1.0.0",
   "description": "A privacy-first browser demonstrator for human-confirmed repair intelligence workflows.",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20.6"
   },
   "scripts": {
     "start": "node src/server.js",
-    "start:ai": "node --env-file=.env src/server.js",
+    "start:ai": "node scripts/run-with-external-env.js src/server.js",
     "demo": "node src/cli.js --sample --confirm --demo-error",
     "preview": "node src/cli.js --sample",
     "test": "node --test",
     "check:browser-syntax": "node --check public/app.js",
     "check:public": "node scripts/public-scope-scan.js",
     "check:secrets": "node scripts/secret-scan.js",
+    "eval:ai": "node scripts/run-with-external-env.js scripts/live-ai-eval.js",
     "check": "npm run check:public && npm run check:secrets && npm run check:browser-syntax && npm test"
   }
 }

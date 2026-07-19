@@ -22,7 +22,7 @@
         <div>
           <p class="eyebrow">Human-confirmed repair intelligence</p>
           <h1>From an incomplete request to a reviewable repair path.</h1>
-          <p class="hero-copy">A browser workflow that keeps language understanding, catalog identity, and the final decision visibly separate.</p>
+          <p class="hero-copy">GPT-5.6 turns incomplete multilingual requests into editable intake while deterministic catalog logic and one human decision preserve exact identity.</p>
         </div>
         <div class="hero-metric" aria-label="Workflow summary">
           <span>4</span>
@@ -40,7 +40,7 @@
       <section class="panel" id="intake">
         <div class="section-heading">
           <div><span class="step-label">Step 01</span><h2>Describe the vehicle and job</h2></div>
-          <span id="ai-status" class="status-pill">Checking optional AI…</span>
+          <span id="ai-status" class="status-pill">Checking GPT-5.6…</span>
         </div>
         <label for="request-text">Free-text request</label>
         <textarea id="request-text" maxlength="500" rows="4">brand-a series-1 2017 2.0 diesel 190 hp automatic; front brake service</textarea>
@@ -50,6 +50,7 @@
           <button class="secondary" id="ai-prefill" type="button" disabled>Prefill with GPT-5.6</button>
         </div>
         <p id="intake-status" class="inline-status" role="status" aria-live="polite"></p>
+        <div id="ai-contribution" class="ai-contribution" hidden aria-live="polite"></div>
       </section>
 
       <section class="panel muted" id="confirm" aria-labelledby="confirm-title">
@@ -63,10 +64,10 @@
           <label>Model<input name="model" autocomplete="off"></label>
           <label>Year<input name="year" inputmode="numeric"></label>
           <label>Engine (L)<input name="engineLiters" inputmode="decimal"></label>
-          <label>Fuel<input name="fuel" autocomplete="off"></label>
+          <label>Fuel<select name="fuel"><option value="">Not resolved</option><option value="diesel">Diesel</option><option value="petrol">Petrol</option><option value="electric">Electric</option><option value="hybrid">Hybrid</option></select></label>
           <label>Power (hp)<input name="powerHp" inputmode="numeric"></label>
-          <label>Transmission<input name="transmission" autocomplete="off"></label>
-          <label>Repair job<select name="repairNodeId"><option value="front-brake-service">Front brake service</option><option value="unknown">Needs confirmation</option></select></label>
+          <label>Transmission<select name="transmission"><option value="">Not resolved</option><option value="automatic">Automatic</option><option value="manual">Manual</option></select></label>
+          <label>Repair job<select name="repairNodeId"><option value="front-brake-service">Front brake service</option><option value="rear-brake-service">Rear brake service</option><option value="unknown">Needs confirmation</option></select></label>
         </form>
         <div class="button-row">
           <button class="primary" id="find-options" type="button" disabled>Find synthetic options</button>

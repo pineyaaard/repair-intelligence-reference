@@ -1,72 +1,21 @@
-PROPRIETARY EVALUATION LICENSE
+MIT License
 
-Copyright (c) 2026 pineyaaard. All rights reserved.
+Copyright (c) 2026 pineyaaard
 
-This repository and all original source code, documentation, designs, workflows,
-fixtures, and other materials in it (collectively, the "Materials") are
-proprietary. No permission is granted except the limited evaluation permission
-stated below. All rights not expressly granted are reserved.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-1. Contest evaluation permission
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-OpenAI Build Week judges, organizers, administrators, and their authorized
-contractors may view, download, reproduce, install, and execute the Materials
-solely as necessary to evaluate this submission for that contest. This
-permission is non-exclusive, non-transferable, non-sublicensable, revocable,
-and expires when the contest and any related judging, verification, and award
-processes end.
-
-2. No general-use permission
-
-Except for the limited permission in Section 1 or permission that the GitHub
-Terms of Service necessarily require for hosting and displaying a public
-repository, no person or entity may copy, use, modify, merge, publish,
-distribute, sublicense, sell, rent, host, deploy, reproduce, create derivative
-works from, or commercially or non-commercially exploit any part of the
-Materials without the copyright holder's prior written permission.
-
-3. Additional restrictions
-
-Without prior written permission, the Materials may not be:
-
-- used to create, improve, validate, benchmark, or operate a competing product
-  or service;
-- used as training, fine-tuning, retrieval, evaluation, or synthetic-data input
-  for any machine-learning or artificial-intelligence system;
-- used to extract or reproduce the architecture, workflows, taxonomies,
-  prompts, schemas, user experience, or other protectable expression;
-- stripped of copyright, attribution, provenance, or license notices; or
-- reverse engineered, decompiled, or disassembled, except only to the minimum
-  extent such a restriction is prohibited by applicable law.
-
-4. Third-party material
-
-Third-party dependencies and other third-party material remain governed by
-their respective licenses. This license grants no rights to third-party
-material, trademarks, service marks, patents, data, catalogs, or confidential
-information.
-
-5. Contributions
-
-No contribution is accepted unless the copyright holder has first approved it
-in writing under a separate contribution or assignment agreement. Merely
-opening an issue, pull request, or discussion does not grant any license to the
-Materials and does not obligate the copyright holder to accept or use it.
-
-6. Termination
-
-Any permission granted by this license terminates automatically upon breach.
-After termination, all use must cease and all retained copies must be deleted,
-except where retention is required by law or by the contest administrator's
-formal recordkeeping duties.
-
-7. Disclaimer
-
-THE MATERIALS ARE PROVIDED "AS IS" AND WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EXPRESS OR IMPLIED, INCLUDING MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE, TITLE, AND NON-INFRINGEMENT. TO THE MAXIMUM EXTENT PERMITTED BY LAW,
-THE COPYRIGHT HOLDER WILL NOT BE LIABLE FOR ANY CLAIM, LOSS, OR DAMAGE ARISING
-FROM OR RELATED TO THE MATERIALS OR THEIR USE.
-
-For any use beyond the contest-evaluation permission, obtain prior written
-permission from the repository owner.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

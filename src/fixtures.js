@@ -10,6 +10,13 @@ const frontBrakeNode = (parts) => ({
   parts
 });
 
+const rearBrakeNode = (parts) => ({
+  id: 'rear-brake-service',
+  label: 'Rear brake service',
+  diagram: ['wheel-end', 'rear-caliper', 'pad-set'],
+  parts
+});
+
 export const CATALOG_SOURCES = [
   {
     id: 'source-alpha',
@@ -30,6 +37,10 @@ export const CATALOG_SOURCES = [
           frontBrakeNode([
             { id: 'pad-set-a', label: 'Pad set', quantity: 1 },
             { id: 'rotor-a', label: 'Brake rotor', quantity: 2 }
+          ]),
+          rearBrakeNode([
+            { id: 'pad-set-rear-a', label: 'Pad set', quantity: 1 },
+            { id: 'rotor-rear-a', label: 'Brake rotor', quantity: 2 }
           ])
         ]
       },
@@ -43,7 +54,10 @@ export const CATALOG_SOURCES = [
         powerHp: 120,
         transmission: 'manual',
         variant: 'C1',
-        nodes: [frontBrakeNode([{ id: 'pad-set-c', label: 'Pad set', quantity: 1 }])]
+        nodes: [
+          frontBrakeNode([{ id: 'pad-set-c', label: 'Pad set', quantity: 1 }]),
+          rearBrakeNode([{ id: 'shoe-kit-c', label: 'Shoe kit', quantity: 1 }])
+        ]
       }
     ]
   },
@@ -66,6 +80,10 @@ export const CATALOG_SOURCES = [
           frontBrakeNode([
             { id: 'pad-set-a', label: 'Pad set', quantity: 1 },
             { id: 'wear-sensor-b', label: 'Wear sensor', quantity: 1 }
+          ]),
+          rearBrakeNode([
+            { id: 'pad-set-rear-a', label: 'Pad set', quantity: 1 },
+            { id: 'park-shoe-b', label: 'Parking shoe kit', quantity: 1 }
           ])
         ]
       },
@@ -79,7 +97,10 @@ export const CATALOG_SOURCES = [
         powerHp: 190,
         transmission: 'automatic',
         variant: 'P2',
-        nodes: [frontBrakeNode([{ id: 'pad-set-b', label: 'Pad set', quantity: 1 }])]
+        nodes: [
+          frontBrakeNode([{ id: 'pad-set-b', label: 'Pad set', quantity: 1 }]),
+          rearBrakeNode([{ id: 'pad-set-rear-b', label: 'Pad set', quantity: 1 }])
+        ]
       }
     ]
   },
@@ -98,7 +119,10 @@ export const CATALOG_SOURCES = [
         powerHp: 165,
         transmission: 'manual',
         variant: 'U1',
-        nodes: [frontBrakeNode([{ id: 'pad-set-u', label: 'Pad set', quantity: 1 }])]
+        nodes: [
+          frontBrakeNode([{ id: 'pad-set-u', label: 'Pad set', quantity: 1 }]),
+          rearBrakeNode([{ id: 'pad-set-rear-u', label: 'Pad set', quantity: 1 }])
+        ]
       }
     ]
   }
